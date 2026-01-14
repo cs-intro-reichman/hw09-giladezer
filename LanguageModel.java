@@ -1,5 +1,9 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Random;
+
 
 public class LanguageModel {
 
@@ -32,20 +36,48 @@ public class LanguageModel {
     }
 
     /** Builds a language model from the text in the given file (the corpus). */
-	public void train(String fileName) {
-		// Your code goes here
+	public void train(String fileName) throws IOException{
+
+        String fileContent = Files.readString(Path.of(fileName));
+        for (int i = 0; i <= fileContent.length() - windowLength; i++) {
+            String window = fileContent.substring(i, i + windowLength);
+            char nextChar = fileContent.charAt(i + windowLength);
+            
+            List charDataList = CharDataMap.getOrDefault(window, new List());
+            int charIndex = charDataList.indexOf(nextChar);
+            if (charIndex != -1) {
+                CharData existingCharData = charDataList.get(charIndex);
+                existingCharData.count++;
+            } else {
+                charDataList.addFirst(nextChar);
+            }
+            CharDataMap.put(window, charDataList);
+        }
+		
 	}
 
     // Computes and sets the probabilities (p and cp fields) of all the
 	// characters in the given list. */
 	void calculateProbabilities(List probs) {				
-		// Your code goes here
+		for (int i = 0; i < probs.getSize(); i++) {
+            probs.get(i).p = probs.get(i).count / (double) probs.getSize();
+        }
+        double cumulativeProbability = 0.0;
+        for (int i = 0; i < probs.getSize(); i++) {
+            cumulativeProbability += probs.get(i).p;
+            probs.get(i).cp = cumulativeProbability;
+        }
 	}
 
     // Returns a random character from the given probabilities list.
 	char getRandomChar(List probs) {
-		// Your code goes here
-		return ' ';
+		double rand = randomGenerator.nextDouble();
+        for (int i = 0; i < probs.getSize(); i++) {
+            if (rand <= probs.get(i).cp) {
+                return probs.get(i).chr;
+            }
+        }
+        return probs.get(probs.getSize() - 1).chr; // Fallback
 	}
 
     /**
@@ -56,8 +88,18 @@ public class LanguageModel {
 	 * @return the generated text
 	 */
 	public String generate(String initialText, int textLength) {
-		// Your code goes here
-        return "";
+		StringBuilder generatedText = new StringBuilder(initialText);
+        for (int i = 0; i < textLength; i++) {
+            String window = generatedText.substring(generatedText.length() - windowLength);
+            List charDataList = CharDataMap.get(window);
+            if (charDataList == null) {
+                break; // No further generation possible
+            }
+            calculateProbabilities(charDataList);
+            char nextChar = getRandomChar(charDataList);
+            generatedText.append(nextChar);
+        }
+        return generatedText.toString();
 	}
 
     /** Returns a string representing the map of this language model. */
