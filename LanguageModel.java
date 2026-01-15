@@ -1,4 +1,3 @@
-// LanguageModel.java
 import java.util.HashMap;
 import java.util.Random;
 
@@ -10,38 +9,37 @@ public class LanguageModel {
 
     public LanguageModel(int windowLength) {
         this.windowLength = windowLength;
-        this.randomGenerator = new Random();
+        randomGenerator = new Random();
         CharDataMap = new HashMap<>();
     }
 
     public LanguageModel(int windowLength, int seed) {
         this.windowLength = windowLength;
-        this.randomGenerator = new Random(seed);
+        randomGenerator = new Random(seed);
         CharDataMap = new HashMap<>();
     }
 
     public void calculateProbabilities(List list) {
         int total = 0;
-        for (int i = 0; i < list.size(); i++)
+        for (int i = 0; i < list.getSize(); i++)
             total += list.get(i).count;
 
-        double cumulative = 0.0;
-        for (int i = 0; i < list.size(); i++) {
+        double cp = 0.0;
+        for (int i = 0; i < list.getSize(); i++) {
             CharData cd = list.get(i);
             cd.p = (double) cd.count / total;
-            cumulative += cd.p;
-            cd.cp = cumulative;
+            cp += cd.p;
+            cd.cp = cp;
         }
     }
 
     public char getRandomChar(List list) {
         double r = randomGenerator.nextDouble();
-        for (int i = 0; i < list.size(); i++) {
-            CharData cd = list.get(i);
-            if (cd.cp > r)
-                return cd.chr;
+        for (int i = 0; i < list.getSize(); i++) {
+            if (list.get(i).cp > r)
+                return list.get(i).chr;
         }
-        return list.get(list.size() - 1).chr;
+        return list.get(list.getSize() - 1).chr;
     }
 
     public void train(String fileName) {
@@ -54,12 +52,10 @@ public class LanguageModel {
         while (!in.isEmpty()) {
             char c = in.readChar();
             List probs = CharDataMap.get(window);
-
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
-
             probs.update(c);
             window = window.substring(1) + c;
         }
@@ -79,8 +75,7 @@ public class LanguageModel {
             List probs = CharDataMap.get(window);
             if (probs == null)
                 break;
-            char next = getRandomChar(probs);
-            result += next;
+            result += getRandomChar(probs);
         }
 
         return result;

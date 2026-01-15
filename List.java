@@ -8,6 +8,15 @@ public class List {
         size = 0;
     }
 
+    public int getSize() {
+        return size;
+    }
+
+    public CharData getFirst() {
+        if (first == null) return null;
+        return first.cp;
+    }
+
     public int indexOf(char chr) {
         Node current = first;
         int index = 0;
@@ -77,21 +86,17 @@ public class List {
             get(idx).count++;
     }
 
-    public int size() {
-        return size;
-    }
-
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("(");
         Node current = first;
         while (current != null) {
             sb.append(current.cp);
+            if (current.next != null)
+                sb.append(" ");
             current = current.next;
         }
+        sb.append(")");
         return sb.toString();
-    }
-
-    Node getFirst() {
-        return first;
     }
 }
