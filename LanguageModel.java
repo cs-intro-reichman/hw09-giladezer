@@ -46,17 +46,22 @@ public class LanguageModel {
         In in = new In(fileName);
         String window = "";
 
+        // read first window
         for (int i = 0; i < windowLength; i++)
             window += in.readChar();
 
+        // process remaining characters
         while (!in.isEmpty()) {
             char c = in.readChar();
+
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
+
             probs.update(c);
+
             window = window.substring(1) + c;
         }
 

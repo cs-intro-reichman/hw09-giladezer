@@ -8,13 +8,14 @@ public class List {
         size = 0;
     }
 
+    // REQUIRED by tester
     public int getSize() {
         return size;
     }
 
+    // REQUIRED by tester: must return CharData
     public CharData getFirst() {
-        if (first == null) return null;
-        return first.cp;
+        return first == null ? null : first.cp;
     }
 
     public int indexOf(char chr) {
