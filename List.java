@@ -41,13 +41,14 @@ public class List {
     /** GIVE Textual representation of this list using listiterator. */
     public String toString() {
         ListIterator iter = listIterator(0);
-        String s = "";
+        String s = "(";
         while (iter.hasNext()) {
             s += iter.next();
             if (iter.hasNext()) {
                 s += " ";
             }
         }
+        s += ")";
         return s;
     }
 
