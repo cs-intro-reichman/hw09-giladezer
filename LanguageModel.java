@@ -1,5 +1,9 @@
 import java.util.HashMap;
 import java.util.Random;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 
 public class LanguageModel {
 
@@ -33,19 +37,87 @@ public class LanguageModel {
 
     /** Builds a language model from the text in the given file (the corpus). */
 	public void train(String fileName) {
-		// Your code goes here
-	}
+        String text;
 
-    // Computes and sets the probabilities (p and cp fields) of all the
-	// characters in the given list. */
-	void calculateProbabilities(List probs) {				
-		// Your code goes here
-	}
+        try {
+            text = Files.readString(Paths.get(fileName));
+        } catch (IOException e) {
+            return;
+        }
+
+        if (text.length() < windowLength) {
+            return;
+        }
+
+        // חלון ראשון
+        String window = text.substring(0, windowLength);
+
+        // מעבר תו-תו
+        for (int i = windowLength; i < text.length(); i++) {
+            char nextChar = text.charAt(i);
+
+            List probs = CharDataMap.get(window);
+
+            if (probs == null) {
+                probs = new List();
+                probs.addFirst(nextChar);
+                CharDataMap.put(window, probs);
+            } else {
+                probs.update(nextChar);
+            }
+
+            // הזזת החלון
+            window = window.substring(1) + nextChar;
+        }
+
+        // חישוב הסתברויות לכל חלון
+        for (List probs : CharDataMap.values()) {
+            calculateProbabilities(probs);
+        }
+    }
+
+
+        // Computes and sets the probabilities (p and cp fields) of all the
+        // characters in the given list. */
+        void calculateProbabilities(List probs) {
+        if (probs.getSize() == 0) {
+            return;
+        }
+
+        int total = 0;
+        ListIterator iter = probs.listIterator(0);
+
+        // חישוב מספר ההופעות הכולל
+        while (iter.hasNext()) {
+            CharData cd = iter.next();
+            total += cd.count;
+        }
+
+        // חישוב p ו-cp
+        double cumulative = 0.0;
+        iter = probs.listIterator(0);
+
+        while (iter.hasNext()) {
+            CharData cd = iter.next();
+            cd.p = (double) cd.count / total;
+            cumulative += cd.p;
+            cd.cp = cumulative;
+        }
+    }
+
 
     // Returns a random character from the given probabilities list.
 	char getRandomChar(List probs) {
-		// Your code goes here
-		return ' ';
+        double rand = randomGenerator.nextDouble();
+        ListIterator iter = probs.listIterator(0);
+        while (iter.hasNext()) {
+            CharData cd = iter.next();
+            if (rand <= cd.cp) {
+                return cd.chr;
+            }
+        }
+        // Fallback, should not reach here if probabilities are set correctly
+        return probs.getFirst().chr;
 	}
 
     /**
@@ -56,9 +128,40 @@ public class LanguageModel {
 	 * @return the generated text
 	 */
 	public String generate(String initialText, int textLength) {
-		// Your code goes here
-        return "";
-	}
+
+    // If initial text is too short, return it unchanged
+    if (initialText.length() < windowLength) {
+        return initialText;
+    }
+
+    StringBuilder generated = new StringBuilder(initialText);
+
+    // We must generate EXACTLY textLength new characters
+    for (int i = 0; i < textLength; i++) {
+
+        int len = generated.length();
+
+        // Get the last windowLength characters
+        String window = generated.substring(len - windowLength, len);
+
+        // Get probabilities list for this window
+        List probs = CharDataMap.get(window);
+
+        // If the window does not exist, stop generation
+        if (probs == null) {
+            break;
+        }
+
+        // Generate next character according to probabilities
+        char nextChar = getRandomChar(probs);
+
+        // Append generated character
+        generated.append(nextChar);
+    }
+
+    return generated.toString();
+}
+
 
     /** Returns a string representing the map of this language model. */
 	public String toString() {
