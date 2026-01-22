@@ -37,81 +37,73 @@ public class LanguageModel {
 
     /** Builds a language model from the text in the given file (the corpus). */
 	public void train(String fileName) {
-    String text = FileUtils.readFile(fileName);
+        String text;
 
-    if (text.length() < windowLength) {
-        return;
-    }
-
-    // חלון ראשון
-    String window = text.substring(0, windowLength);
-
-    // מעבר תו-תו
-    for (int i = windowLength; i < text.length(); i++) {
-        char nextChar = text.charAt(i);
-
-        List probs = CharDataMap.get(window);
-
-        if (probs == null) {
-            probs = new List();
-            probs.add(new CharData(nextChar));
-            CharDataMap.put(window, probs);
-        } else {
-            boolean found = false;
-            ListIterator iter = probs.listIterator(0);
-
-            while (iter.hasNext()) {
-                CharData cd = iter.next();
-                if (cd.equals(nextChar)) {
-                    cd.count++;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                probs.add(new CharData(nextChar));
-            }
+        try {
+            text = Files.readString(Paths.get(fileName));
+        } catch (IOException e) {
+            return;
         }
 
-        // הזזת החלון
-        window = window.substring(1) + nextChar;
+        if (text.length() < windowLength) {
+            return;
+        }
+
+        // חלון ראשון
+        String window = text.substring(0, windowLength);
+
+        // מעבר תו-תו
+        for (int i = windowLength; i < text.length(); i++) {
+            char nextChar = text.charAt(i);
+
+            List probs = CharDataMap.get(window);
+
+            if (probs == null) {
+                probs = new List();
+                probs.addFirst(nextChar);
+                CharDataMap.put(window, probs);
+            } else {
+                probs.update(nextChar);
+            }
+
+            // הזזת החלון
+            window = window.substring(1) + nextChar;
+        }
+
+        // חישוב הסתברויות לכל חלון
+        for (List probs : CharDataMap.values()) {
+            calculateProbabilities(probs);
+        }
     }
 
-    // חישוב הסתברויות לכל חלון
-    for (List probs : CharDataMap.values()) {
-        calculateProbabilities(probs);
+
+        // Computes and sets the probabilities (p and cp fields) of all the
+        // characters in the given list. */
+        void calculateProbabilities(List probs) {
+        if (probs.getSize() == 0) {
+            return;
+        }
+
+        int total = 0;
+        ListIterator iter = probs.listIterator(0);
+
+        // חישוב מספר ההופעות הכולל
+        while (iter.hasNext()) {
+            CharData cd = iter.next();
+            total += cd.count;
+        }
+
+        // חישוב p ו-cp
+        double cumulative = 0.0;
+        iter = probs.listIterator(0);
+
+        while (iter.hasNext()) {
+            CharData cd = iter.next();
+            cd.p = (double) cd.count / total;
+            cumulative += cd.p;
+            cd.cp = cumulative;
+        }
     }
-}
-
-
-    // Computes and sets the probabilities (p and cp fields) of all the
-	// characters in the given list. */
-	void calculateProbabilities(List probs) {
-    if (probs.getSize() == 0) {
-        return;
-    }
-
-    int total = 0;
-    ListIterator iter = probs.listIterator(0);
-
-    // חישוב מספר ההופעות הכולל
-    while (iter.hasNext()) {
-        CharData cd = iter.next();
-        total += cd.count;
-    }
-
-    // חישוב p ו-cp
-    double cumulative = 0.0;
-    iter = probs.listIterator(0);
-
-    while (iter.hasNext()) {
-        CharData cd = iter.next();
-        cd.p = (double) cd.count / total;
-        cumulative += cd.p;
-        cd.cp = cumulative;
-    }
-}
 
 
     // Returns a random character from the given probabilities list.
@@ -136,9 +128,42 @@ public class LanguageModel {
 	 * @return the generated text
 	 */
 	public String generate(String initialText, int textLength) {
-		// Your code goes here
-        return "";
-	}
+
+    // If the initial text is shorter than the window length,
+    // we cannot generate any text
+    if (initialText.length() < windowLength) {
+        return initialText;
+    }
+
+    // Use StringBuilder to efficiently build the generated text
+    StringBuilder generated = new StringBuilder(initialText);
+
+    // Generate characters until reaching the desired text length
+    while (generated.length() < textLength) {
+
+        int len = generated.length();
+
+        // Extract the last windowLength characters as the current window
+        String window = generated.substring(len - windowLength, len);
+
+        // Get the probability list associated with this window
+        List probs = CharDataMap.get(window);
+
+        // If the window does not exist in the model, stop generating
+        if (probs == null) {
+            break;
+        }
+
+        // Draw a random character according to the learned probabilities
+        char nextChar = getRandomChar(probs);
+
+        // Append the generated character to the text
+        generated.append(nextChar);
+    }
+
+    // Return the generated text
+    return generated.toString();
+}
 
     /** Returns a string representing the map of this language model. */
 	public String toString() {

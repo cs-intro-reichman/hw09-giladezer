@@ -58,7 +58,7 @@ public class List {
        Node current = new Node(first.cp, first.next);
        int count = 0;
        while (current != null){
-            if(current.cp.getChar() == chr){
+            if(current.cp.chr == chr){
                 return count;
             }else{
                 current = current.next;
@@ -77,7 +77,7 @@ public class List {
         }
         Node current = new Node(first.cp, first.next);
         while(current != null){
-            if(current.cp.getChar() == chr){
+            if(current.cp.chr == chr){
                 current.cp.count++;
             }
             current = current.next;
@@ -98,7 +98,7 @@ public class List {
         Node current = new Node(first.cp, first.next);
         Node previous = null;
         while(current != null){
-            if(current.cp.getChar() == chr){
+            if(current.cp.chr == chr){
                 if(previous == null){
                     first = current.next;
                 }else{
