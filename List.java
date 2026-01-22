@@ -79,7 +79,7 @@ public class List {
         // Traverse the list to see if the character already exists
         Node current = first;
         while (current != null) {
-            if (current.cp.getChar() == chr) {
+            if (current.cp.chr == chr) {
                 // Character found – increment count and stop
                 current.cp.count++;
                 return;
