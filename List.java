@@ -44,6 +44,9 @@ public class List {
         String s = "";
         while (iter.hasNext()) {
             s += iter.next();
+            if (iter.hasNext()) {
+                s += " ";
+            }
         }
         return s;
     }
@@ -72,18 +75,21 @@ public class List {
      *  increments its counter. Otherwise, adds a new CharData object with the
      *  given chr to the beginning of this list. */
     public void update(char chr) {
-        if(first == null){
-            addFirst(chr);
-        }
-        Node current = new Node(first.cp, first.next);
-        while(current != null){
-            if(current.cp.chr == chr){
+
+        // Traverse the list to see if the character already exists
+        Node current = first;
+        while (current != null) {
+            if (current.cp.getChar() == chr) {
+                // Character found – increment count and stop
                 current.cp.count++;
+                return;
             }
             current = current.next;
         }
+
+        // Character not found – add a new CharData at the beginning
         addFirst(chr);
-    }
+}
 
     /** GIVE If the given character exists in one of the CharData objects
      *  in this list, removes this CharData object from the list and returns

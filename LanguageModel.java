@@ -113,11 +113,11 @@ public class LanguageModel {
         while (iter.hasNext()) {
             CharData cd = iter.next();
             if (rand <= cd.cp) {
-                return cd.getChar();
+                return cd.chr;
             }
         }
         // Fallback, should not reach here if probabilities are set correctly
-        return probs.getFirst().getChar();
+        return probs.getFirst().chr;
 	}
 
     /**
